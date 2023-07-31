@@ -6,10 +6,12 @@ from pydub import AudioSegment
 from pydub.playback import _play_with_simpleaudio
 from os import listdir
 from pathlib import Path
-from random import choice
+from random import shuffle
 import threading
 import asyncio
 import time
+from pygame import mixer, mixer_music
+
 
 root = ttk.Window(themename="superhero")
 
@@ -21,6 +23,8 @@ icon_left = ImageTk.PhotoImage(Image.open("./media/icon_left.png").resize((SIZE,
 icon_play = ImageTk.PhotoImage(Image.open("./media/icon_play.png").resize((SIZE,SIZE)))
 icon_pause = ImageTk.PhotoImage(Image.open("./media/icon_pause.png").resize((SIZE,SIZE)))
 icon_right = ImageTk.PhotoImage(Image.open("./media/icon_right.png").resize((SIZE,SIZE)))
+
+mixer.init()
 
 class Application:
 
@@ -35,27 +39,65 @@ class Application:
                 folder_path = Path(str(line).rstrip())
                 backslash = '\\'
                 songs += [f"{folder_path}{backslash}{file}" for file in listdir(folder_path) if not file.endswith(".spotdl-cache")]
+        shuffle(songs)
 
         def _asyncio_thread(async_loop):
             async_loop.run_until_complete(play_song())
 
         def do_tasks(async_loop):
-            global playing 
+            global playing
+            global first_time
             playing = not playing
-            threading.Thread(target=_asyncio_thread, args=(async_loop,), daemon=True).start()
-            button_play["image"] = icon_pause
- 
-        async def play_song():
-            song = AudioSegment.from_file(choice(songs))
-            song = song.fade_in(3000).fade_out(3000)
-            start = time.time()
-            if playing:
-                threading.Thread(target=_play_with_simpleaudio, args=(song,), daemon=True).start()
-            else:
-                
-                dif = time.time() - start
-                song = song[dif:]
+            button_play["image"] = icon_pause if playing else icon_play
 
+            if first_time:
+                first_time = False
+                threading.Thread(target=_asyncio_thread, args=(async_loop,), daemon=True).start()
+
+        global paused
+        global first_time
+        global i
+        i=0
+        first_time = True
+        paused = False
+        async def play_song():
+            global i
+
+            mixer_music.load(songs[i])
+            mixer_music.play()
+            i+=1
+            
+
+
+        if mixer_music.get_busy():
+            mixer_music.pause()
+            paused = True
+        elif not mixer_music.get_busy() and paused:
+            mixer_music.unpause()
+            paused = False
+        
+            
+
+        def previous_song(x):
+            global i
+            global playing
+            i-=1
+            #playing = not playing
+            mixer_music.unload()
+            mixer_music.load(songs[i])
+            mixer_music.play()
+            print(playing, i)
+        def next_song(x):
+            global i
+            global playing
+            i+=1
+            #playing = not playing
+            mixer_music.unload()
+            mixer_music.load(songs[i])
+            mixer_music.play()
+            print(playing, i)
+
+        
         async_loop = asyncio.get_event_loop()
         
         ### BUTTON STYLE ###
@@ -85,13 +127,16 @@ class Application:
         top_frame.grid(column=0, columnspan=4,row=1)
 
         ### BUTTONS ###
-
-        button_left = ttk.Button(top_frame, image=icon_left, bootstyle=BUTTON_STYLE)
+        button_left = ttk.Button(top_frame, command=lambda: root.event_generate("<<Previous>>"), image=icon_left, bootstyle=BUTTON_STYLE)
         button_left.grid(column=1, row=1)
         button_play = ttk.Button(top_frame, command=lambda: do_tasks(async_loop), image=icon_play, bootstyle=BUTTON_STYLE)
         button_play.grid(column=2, row=1)
-        button_right = ttk.Button(top_frame, image=icon_right, bootstyle=BUTTON_STYLE)
+        button_right = ttk.Button(top_frame, command=lambda: root.event_generate("<<Next>>"), bootstyle=BUTTON_STYLE)
         button_right.grid(column=3, row=1)
+
+        root.bind("<<Previous>>", previous_song)
+        root.bind("<<Next>>", next_song)
+
 
 Application(root)
 root.mainloop()
