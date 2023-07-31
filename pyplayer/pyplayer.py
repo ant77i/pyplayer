@@ -11,6 +11,7 @@ import threading
 import asyncio
 import time
 from pygame import mixer, mixer_music
+from mutagen.mp3 import MP3
 
 
 root = ttk.Window(themename="superhero")
@@ -30,8 +31,7 @@ class Application:
 
     def __init__(self, root):
         
-        global playing 
-        playing = False
+        
 
         songs = list()
         with open("playlist", 'r') as f:
@@ -41,65 +41,75 @@ class Application:
                 songs += [f"{folder_path}{backslash}{file}" for file in listdir(folder_path) if not file.endswith(".spotdl-cache")]
         shuffle(songs)
 
-        def _asyncio_thread(async_loop):
-            async_loop.run_until_complete(play_song())
-
-        def do_tasks(async_loop):
-            global playing
-            global first_time
-            playing = not playing
-            button_play["image"] = icon_pause if playing else icon_play
-
-            if first_time:
-                first_time = False
-                threading.Thread(target=_asyncio_thread, args=(async_loop,), daemon=True).start()
 
         global paused
-        global first_time
+        global playing 
         global i
-        i=0
-        first_time = True
+        global song_dur
+        playing = False
         paused = False
-        async def play_song():
+        i = 0
+        song_dur = 0
+
+        def play_song():
+            global playing
+            global paused
             global i
-
-            mixer_music.load(songs[i])
-            mixer_music.play()
-            i+=1
             
+            if playing and not paused:
+                mixer_music.pause()
+                paused = True
+            elif not playing and paused:
+                mixer_music.unpause()
+                paused = False
+            else:
+                mixer_music.load(songs[i])
+                mixer_music.play()
+                i+=1
 
+            playing = not playing
+            button_play["image"] = icon_pause if playing else icon_play
+            update_song_dur(songs[i])
 
-        if mixer_music.get_busy():
-            mixer_music.pause()
-            paused = True
-        elif not mixer_music.get_busy() and paused:
-            mixer_music.unpause()
-            paused = False
-        
+            #print(playing, paused, i)     # Debug
             
-
-        def previous_song(x):
+        def previous_song():
             global i
             global playing
             i-=1
-            #playing = not playing
+
             mixer_music.unload()
             mixer_music.load(songs[i])
             mixer_music.play()
-            print(playing, i)
-        def next_song(x):
+            button_play["image"] = icon_pause
+            update_song_dur(songs[i])
+            # print(playing, i)               # Debug
+
+        def next_song():
             global i
             global playing
             i+=1
-            #playing = not playing
+
             mixer_music.unload()
             mixer_music.load(songs[i])
             mixer_music.play()
-            print(playing, i)
+            button_play["image"] = icon_pause
+            update_song_dur(songs[i])
 
+            # print(playing, i)               # Debug
+
+        def set_vol(var):
+            mixer_music.set_volume(float(var))
         
-        async_loop = asyncio.get_event_loop()
-        
+        def set_pos(var):
+            mixer_music.set_pos(float(var))
+            print(song_dur,mixer_music.get_pos() ,var)
+
+        def update_song_dur(song):
+            audio = MP3(song)
+            song_dur = audio.info.length
+            print(f"Updated song dur: {song_dur}")
+
         ### BUTTON STYLE ###
         btn_style = ttk.Style()
 
@@ -115,11 +125,11 @@ class Application:
         bottom_frame.rowconfigure(0, weight=1)
 
         ### BOTTOM SLIDER ###
-        bottom_slider = ttk.Scale(bottom_frame, orient=HORIZONTAL, length=200, from_=1.0, to=100.0)
+        bottom_slider = ttk.Scale(bottom_frame, orient=HORIZONTAL, command=set_pos, length=200, from_=0, to=song_dur)
         bottom_slider.grid(column=1, columnspan=3, row=1, padx=10)
 
         ### VOLUME SLIDER ###
-        volume_slider = ttk.Scale(bottom_frame, orient=VERTICAL, length=50, from_=1.0, to=100.0)
+        volume_slider = ttk.Scale(bottom_frame, orient=VERTICAL, command=set_vol, length=50, from_=1, to=0)
         volume_slider.grid(column=4, row=1, padx=10)
 
         ### TOP FRAME ###
@@ -127,11 +137,11 @@ class Application:
         top_frame.grid(column=0, columnspan=4,row=1)
 
         ### BUTTONS ###
-        button_left = ttk.Button(top_frame, command=lambda: root.event_generate("<<Previous>>"), image=icon_left, bootstyle=BUTTON_STYLE)
+        button_left = ttk.Button(top_frame, command=lambda: previous_song(), image=icon_left, bootstyle=BUTTON_STYLE)
         button_left.grid(column=1, row=1)
-        button_play = ttk.Button(top_frame, command=lambda: do_tasks(async_loop), image=icon_play, bootstyle=BUTTON_STYLE)
+        button_play = ttk.Button(top_frame, command=lambda: play_song(), image=icon_play, bootstyle=BUTTON_STYLE)
         button_play.grid(column=2, row=1)
-        button_right = ttk.Button(top_frame, command=lambda: root.event_generate("<<Next>>"), bootstyle=BUTTON_STYLE)
+        button_right = ttk.Button(top_frame, command=lambda: next_song(), image=icon_right, bootstyle=BUTTON_STYLE)
         button_right.grid(column=3, row=1)
 
         root.bind("<<Previous>>", previous_song)
