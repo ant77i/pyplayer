@@ -40,6 +40,7 @@ class Application:
                 backslash = '\\'
                 songs += [f"{folder_path}{backslash}{file}" for file in listdir(folder_path) if not file.endswith(".spotdl-cache")]
         shuffle(songs)
+        print(len(songs))
 
 
         global paused
@@ -49,7 +50,7 @@ class Application:
         playing = False
         paused = False
         i = 0
-        song_dur = 0
+        song_dur = 0.0
 
         def play_song():
             global playing
@@ -63,52 +64,79 @@ class Application:
                 mixer_music.unpause()
                 paused = False
             else:
+                i+=1
                 mixer_music.load(songs[i])
                 mixer_music.play()
-                i+=1
-
+            
             playing = not playing
             button_play["image"] = icon_pause if playing else icon_play
-            update_song_dur(songs[i])
 
-            #print(playing, paused, i)     # Debug
+            update_pos()
+            update_song_dur()
+
+            print(playing, paused, i)                                           # Debug
             
         def previous_song():
             global i
             global playing
             i-=1
 
+            pos.set(0)
             mixer_music.unload()
             mixer_music.load(songs[i])
             mixer_music.play()
             button_play["image"] = icon_pause
-            update_song_dur(songs[i])
-            # print(playing, i)               # Debug
+            update_song_dur()
+            # print(playing, i)                                                 # Debug
 
         def next_song():
             global i
             global playing
             i+=1
 
+            pos.set(0)
             mixer_music.unload()
             mixer_music.load(songs[i])
             mixer_music.play()
             button_play["image"] = icon_pause
-            update_song_dur(songs[i])
+            update_song_dur()
 
-            # print(playing, i)               # Debug
+            # print(playing, i)                                                 # Debug
 
         def set_vol(var):
             mixer_music.set_volume(float(var))
         
         def set_pos(var):
-            mixer_music.set_pos(float(var))
-            print(song_dur,mixer_music.get_pos() ,var)
+            #mixer_music.stop()
+            mixer_music.play(start=float(var))
+            # print(song_dur,mixer_music.get_pos() ,var)                        # Debug
 
-        def update_song_dur(song):
-            audio = MP3(song)
-            song_dur = audio.info.length
-            print(f"Updated song dur: {song_dur}")
+
+        def update_song_dur():
+            song_dur = get_mp3_length(songs[i])
+            bottom_slider.config(to=song_dur)
+            print(f"Updated song dur: {song_dur} test: {bottom_slider['to']} Song: {songs[i]} i: {i}")             # Debug
+
+        def update_pos():
+            if paused: 
+                root.after(1000, update_pos)
+                return
+
+            if not mixer_music.get_busy() and not paused:
+                next_song()
+
+            pos.set(min((pos.get() + 1.0), get_mp3_length(songs[i])))
+            print(pos.get(), get_mp3_length(songs[i]), mixer_music.get_busy(), paused)
+            root.after(1000, update_pos)
+
+        def get_mp3_length(filepath):
+            try:
+                audio = MP3(filepath)
+                length_in_seconds = int(audio.info.length)
+                return length_in_seconds
+            except Exception as e:
+                print(f"Error: {e}")
+                return None
 
         ### BUTTON STYLE ###
         btn_style = ttk.Style()
@@ -125,11 +153,13 @@ class Application:
         bottom_frame.rowconfigure(0, weight=1)
 
         ### BOTTOM SLIDER ###
-        bottom_slider = ttk.Scale(bottom_frame, orient=HORIZONTAL, command=set_pos, length=200, from_=0, to=song_dur)
+        pos = DoubleVar(); pos.set(0)
+        bottom_slider = ttk.Scale(bottom_frame, orient=HORIZONTAL, variable=pos, command=set_pos, length=200, from_=0, to=1)
         bottom_slider.grid(column=1, columnspan=3, row=1, padx=10)
 
         ### VOLUME SLIDER ###
-        volume_slider = ttk.Scale(bottom_frame, orient=VERTICAL, command=set_vol, length=50, from_=1, to=0)
+        vol = DoubleVar(); vol.set(mixer_music.get_volume())
+        volume_slider = ttk.Scale(bottom_frame, orient=VERTICAL, variable=vol ,command=set_vol, length=50, from_=1, to=0)
         volume_slider.grid(column=4, row=1, padx=10)
 
         ### TOP FRAME ###
