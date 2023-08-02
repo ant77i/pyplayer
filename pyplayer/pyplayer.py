@@ -17,13 +17,14 @@ from mutagen.mp3 import MP3
 root = ttk.Window(themename="superhero")
 
 TITLE = "Pyplayer"
-SIZE = 40
+SIZE = (40, 40)
 BUTTON_STYLE = LINK
 
-icon_left = ImageTk.PhotoImage(Image.open("./media/icon_left.png").resize((SIZE,SIZE)))
-icon_play = ImageTk.PhotoImage(Image.open("./media/icon_play.png").resize((SIZE,SIZE)))
-icon_pause = ImageTk.PhotoImage(Image.open("./media/icon_pause.png").resize((SIZE,SIZE)))
-icon_right = ImageTk.PhotoImage(Image.open("./media/icon_right.png").resize((SIZE,SIZE)))
+icon_left = ImageTk.PhotoImage(Image.open("./media/icon_left.png").resize(SIZE))
+icon_play = ImageTk.PhotoImage(Image.open("./media/icon_play.png").resize(SIZE))
+icon_pause = ImageTk.PhotoImage(Image.open("./media/icon_pause.png").resize(SIZE))
+icon_right = ImageTk.PhotoImage(Image.open("./media/icon_right.png").resize(SIZE))
+icon_settings = ImageTk.PhotoImage(Image.open("./media/icon_settings.png").resize((15, 15)))
 
 mixer.init()
 
@@ -40,7 +41,6 @@ class Application:
                 backslash = '\\'
                 songs += [f"{folder_path}{backslash}{file}" for file in listdir(folder_path) if not file.endswith(".spotdl-cache")]
         shuffle(songs)
-        print(len(songs))
 
 
         global paused
@@ -74,7 +74,7 @@ class Application:
             update_pos()
             update_song_dur()
 
-            print(playing, paused, i)                                           # Debug
+            # print(playing, paused, i)                                                                             # Debug
             
         def previous_song():
             global i
@@ -87,7 +87,7 @@ class Application:
             mixer_music.play()
             button_play["image"] = icon_pause
             update_song_dur()
-            # print(playing, i)                                                 # Debug
+            # print(playing, i)                                                                                     # Debug
 
         def next_song():
             global i
@@ -101,7 +101,7 @@ class Application:
             button_play["image"] = icon_pause
             update_song_dur()
 
-            # print(playing, i)                                                 # Debug
+            # print(playing, i)                                                                                     # Debug
 
         def set_vol(var):
             mixer_music.set_volume(float(var))
@@ -109,13 +109,13 @@ class Application:
         def set_pos(var):
             #mixer_music.stop()
             mixer_music.play(start=float(var))
-            # print(song_dur,mixer_music.get_pos() ,var)                        # Debug
+            # print(song_dur,mixer_music.get_pos() ,var)                                                            # Debug
 
 
         def update_song_dur():
             song_dur = get_mp3_length(songs[i])
             bottom_slider.config(to=song_dur)
-            print(f"Updated song dur: {song_dur} test: {bottom_slider['to']} Song: {songs[i]} i: {i}")             # Debug
+            # print(f"Updated song dur: {song_dur} test: {bottom_slider['to']} Song: {songs[i]} i: {i}")            # Debug
 
         def update_pos():
             if paused: 
@@ -126,7 +126,7 @@ class Application:
                 next_song()
 
             pos.set(min((pos.get() + 1.0), get_mp3_length(songs[i])))
-            print(pos.get(), get_mp3_length(songs[i]), mixer_music.get_busy(), paused)
+            # print(pos.get(), get_mp3_length(songs[i]), mixer_music.get_busy(), paused)                            # Debug
             root.after(1000, update_pos)
 
         def get_mp3_length(filepath):
@@ -173,6 +173,9 @@ class Application:
         button_play.grid(column=2, row=1)
         button_right = ttk.Button(top_frame, command=lambda: next_song(), image=icon_right, bootstyle=BUTTON_STYLE)
         button_right.grid(column=3, row=1)
+
+        button_setting = ttk.Button(top_frame, image=icon_settings, bootstyle=BUTTON_STYLE)
+        button_setting.grid(column=4, row=1, sticky=(N))
 
         root.bind("<<Previous>>", previous_song)
         root.bind("<<Next>>", next_song)
