@@ -19,7 +19,6 @@ icon_left = ImageTk.PhotoImage(Image.open("./media/icon_left.png").resize(SIZE))
 icon_play = ImageTk.PhotoImage(Image.open("./media/icon_play.png").resize(SIZE))
 icon_pause = ImageTk.PhotoImage(Image.open("./media/icon_pause.png").resize(SIZE))
 icon_right = ImageTk.PhotoImage(Image.open("./media/icon_right.png").resize(SIZE))
-icon_settings = ImageTk.PhotoImage(Image.open("./media/icon_settings.png").resize((15, 15)))
 
 mixer.init()
 
