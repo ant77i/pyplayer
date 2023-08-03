@@ -2,14 +2,9 @@ from tkinter import *
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 from PIL import ImageTk, Image
-from pydub import AudioSegment
-from pydub.playback import _play_with_simpleaudio
 from os import listdir
 from pathlib import Path
 from random import shuffle
-import threading
-import asyncio
-import time
 from pygame import mixer, mixer_music
 from mutagen.mp3 import MP3
 
@@ -32,8 +27,6 @@ class Application:
 
     def __init__(self, root):
         
-        
-
         songs = list()
         with open("playlist", 'r') as f:
             for line in f:
@@ -74,8 +67,6 @@ class Application:
             update_pos()
             update_song_dur()
 
-            # print(playing, paused, i)                                                                             # Debug
-            
         def previous_song():
             global i
             global playing
@@ -87,7 +78,6 @@ class Application:
             mixer_music.play()
             button_play["image"] = icon_pause
             update_song_dur()
-            # print(playing, i)                                                                                     # Debug
 
         def next_song():
             global i
@@ -101,21 +91,15 @@ class Application:
             button_play["image"] = icon_pause
             update_song_dur()
 
-            # print(playing, i)                                                                                     # Debug
-
         def set_vol(var):
             mixer_music.set_volume(float(var))
         
         def set_pos(var):
-            #mixer_music.stop()
             mixer_music.play(start=float(var))
-            # print(song_dur,mixer_music.get_pos() ,var)                                                            # Debug
-
 
         def update_song_dur():
             song_dur = get_mp3_length(songs[i])
             bottom_slider.config(to=song_dur)
-            # print(f"Updated song dur: {song_dur} test: {bottom_slider['to']} Song: {songs[i]} i: {i}")            # Debug
 
         def update_pos():
             if paused: 
@@ -126,7 +110,6 @@ class Application:
                 next_song()
 
             pos.set(min((pos.get() + 1.0), get_mp3_length(songs[i])))
-            # print(pos.get(), get_mp3_length(songs[i]), mixer_music.get_busy(), paused)                            # Debug
             root.after(1000, update_pos)
 
         def get_mp3_length(filepath):
@@ -173,13 +156,6 @@ class Application:
         button_play.grid(column=2, row=1)
         button_right = ttk.Button(top_frame, command=lambda: next_song(), image=icon_right, bootstyle=BUTTON_STYLE)
         button_right.grid(column=3, row=1)
-
-        button_setting = ttk.Button(top_frame, image=icon_settings, bootstyle=BUTTON_STYLE)
-        button_setting.grid(column=4, row=1, sticky=(N))
-
-        root.bind("<<Previous>>", previous_song)
-        root.bind("<<Next>>", next_song)
-
 
 Application(root)
 root.mainloop()
