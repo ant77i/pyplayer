@@ -2,9 +2,10 @@ from tkinter import *
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 from PIL import ImageTk, Image
-from os import listdir
+from os import listdir, environ
 from pathlib import Path
 from random import shuffle
+environ['PYGAME_HIDE_SUPPORT_PROMPT'] = 'hide'
 from pygame import mixer, mixer_music
 from mutagen.mp3 import MP3
 
@@ -15,10 +16,10 @@ TITLE = "Pyplayer"
 SIZE = (40, 40)
 BUTTON_STYLE = LINK
 
-icon_left = ImageTk.PhotoImage(Image.open("./media/icon_left.png").resize(SIZE))
-icon_play = ImageTk.PhotoImage(Image.open("./media/icon_play.png").resize(SIZE))
-icon_pause = ImageTk.PhotoImage(Image.open("./media/icon_pause.png").resize(SIZE))
-icon_right = ImageTk.PhotoImage(Image.open("./media/icon_right.png").resize(SIZE))
+icon_left = ImageTk.PhotoImage(Image.open("../media/icon_left.png").resize(SIZE))
+icon_play = ImageTk.PhotoImage(Image.open("../media/icon_play.png").resize(SIZE))
+icon_pause = ImageTk.PhotoImage(Image.open("../media/icon_pause.png").resize(SIZE))
+icon_right = ImageTk.PhotoImage(Image.open("../media/icon_right.png").resize(SIZE))
 
 mixer.init()
 
@@ -27,7 +28,7 @@ class Application:
     def __init__(self, root):
         
         songs = list()
-        with open("playlist", 'r') as f:
+        with open("../playlist", 'r') as f:
             for line in f:
                 folder_path = Path(str(line).rstrip())
                 backslash = '\\'
