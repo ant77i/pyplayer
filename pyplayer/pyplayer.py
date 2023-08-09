@@ -16,10 +16,11 @@ TITLE = "Pyplayer"
 SIZE = (40, 40)
 BUTTON_STYLE = LINK
 
-icon_left = ImageTk.PhotoImage(Image.open("../media/icon_left.png").resize(SIZE))
-icon_play = ImageTk.PhotoImage(Image.open("../media/icon_play.png").resize(SIZE))
-icon_pause = ImageTk.PhotoImage(Image.open("../media/icon_pause.png").resize(SIZE))
-icon_right = ImageTk.PhotoImage(Image.open("../media/icon_right.png").resize(SIZE))
+ICON_LEFT = ImageTk.PhotoImage(Image.open("./media/icon_left.png").resize(SIZE))
+ICON_PLAY = ImageTk.PhotoImage(Image.open("./media/icon_play.png").resize(SIZE))
+ICON_PAUSE = ImageTk.PhotoImage(Image.open("./media/icon_pause.png").resize(SIZE))
+ICON_RIGHT = ImageTk.PhotoImage(Image.open("./media/icon_right.png").resize(SIZE))
+PYGAME_LOGO = "./media/PYGAME_LOGO.ico"
 
 mixer.init()
 
@@ -28,7 +29,7 @@ class Application:
     def __init__(self, root):
         
         songs = list()
-        with open("../playlist", 'r') as f:
+        with open("./playlist", 'r') as f:
             for line in f:
                 folder_path = Path(str(line).rstrip())
                 backslash = '\\'
@@ -62,7 +63,7 @@ class Application:
                 mixer_music.play()
             
             playing = not playing
-            button_play["image"] = icon_pause if playing else icon_play
+            button_play["image"] = ICON_PAUSE if playing else ICON_PLAY
 
             update_pos()
             update_song_dur()
@@ -76,7 +77,7 @@ class Application:
             mixer_music.unload()
             mixer_music.load(songs[i])
             mixer_music.play()
-            button_play["image"] = icon_pause
+            button_play["image"] = ICON_PAUSE
             update_song_dur()
 
         def next_song():
@@ -88,7 +89,7 @@ class Application:
             mixer_music.unload()
             mixer_music.load(songs[i])
             mixer_music.play()
-            button_play["image"] = icon_pause
+            button_play["image"] = ICON_PAUSE
             update_song_dur()
 
         def set_vol(var):
@@ -126,6 +127,7 @@ class Application:
 
         ### MAINFRAME ###
         root.title(TITLE)
+        root.iconbitmap(PYGAME_LOGO)
         mainframe = ttk.Frame(root)
         mainframe.grid(column=0, row=0)
 
@@ -150,11 +152,11 @@ class Application:
         top_frame.grid(column=0, columnspan=4,row=1)
 
         ### BUTTONS ###
-        button_left = ttk.Button(top_frame, command=lambda: previous_song(), image=icon_left, bootstyle=BUTTON_STYLE)
+        button_left = ttk.Button(top_frame, command=lambda: previous_song(), image=ICON_LEFT, bootstyle=BUTTON_STYLE)
         button_left.grid(column=1, row=1)
-        button_play = ttk.Button(top_frame, command=lambda: play_song(), image=icon_play, bootstyle=BUTTON_STYLE)
+        button_play = ttk.Button(top_frame, command=lambda: play_song(), image=ICON_PLAY, bootstyle=BUTTON_STYLE)
         button_play.grid(column=2, row=1)
-        button_right = ttk.Button(top_frame, command=lambda: next_song(), image=icon_right, bootstyle=BUTTON_STYLE)
+        button_right = ttk.Button(top_frame, command=lambda: next_song(), image=ICON_RIGHT, bootstyle=BUTTON_STYLE)
         button_right.grid(column=3, row=1)
 
 Application(root)
